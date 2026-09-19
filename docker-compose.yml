@@ -1,0 +1,41 @@
+name: igs-signage-attendance
+
+services:
+  attendance:
+    build:
+      context: .
+    container_name: igs-signage-attendance
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    secrets:
+      - attendance_signage_service_key
+      - display_key_eingang
+      - display_key_gts
+    ports:
+      - "127.0.0.1:3004:3004"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 0.25
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3004/api/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+secrets:
+  attendance_signage_service_key:
+    file: ${ATTENDANCE_SIGNAGE_SERVICE_KEY_SOURCE}
+  display_key_eingang:
+    file: ${DISPLAY_KEY_EINGANG_SOURCE}
+  display_key_gts:
+    file: ${DISPLAY_KEY_GTS_SOURCE}
