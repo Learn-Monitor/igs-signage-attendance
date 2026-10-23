@@ -55,6 +55,13 @@ test('board shell contains no secret or QR and implements expiry fail-safe witho
   assert.match(html, /setTimeout\(\(\)=>\{expire\(\);load\(\);\}/); assert.doesNotMatch(html, /location\.reload/); assert.match(html, /Check-in momentan nicht verfügbar/);
 });
 
+test('board backs off on HTTP 429 using Retry-After', () => {
+  const html = boardHtml(config.publicOrigin);
+  assert.match(html, /response\.status===429/);
+  assert.match(html, /headers\.get\('Retry-After'\)/);
+  assert.match(html, /Math\.min\(retry,300\)\*1000/);
+});
+
 async function withServer(client, run) {
   const server = createApp(config, client); server.listen(0, '127.0.0.1'); await once(server, 'listening');
   try { await run(`http://127.0.0.1:${server.address().port}`); } finally { server.close(); await once(server, 'close'); }
